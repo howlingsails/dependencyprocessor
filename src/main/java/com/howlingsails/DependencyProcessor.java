@@ -1,10 +1,19 @@
 package com.howlingsails;
 
+
+
+import org.neo4j.ogm.annotation.GeneratedValue;
+import org.neo4j.ogm.annotation.NodeEntity;
+import org.neo4j.ogm.annotation.Relationship;
+import org.neo4j.ogm.annotation.RelationshipEntity;
+import org.springframework.data.annotation.Id;
+
 import java.io.*;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.TreeSet;
 import java.util.concurrent.TimeUnit;
 
@@ -32,6 +41,14 @@ public class DependencyProcessor {
             processRepoDependency(repo);
         }
         printTree();
+        storetoNeo4j();
+    }
+
+
+
+    private void storetoNeo4j() {
+
+
     }
 
     private void printTree() {
@@ -70,7 +87,7 @@ public class DependencyProcessor {
                     if (isProcessingDependency) {
                         addDependencyLine(repoName, dependencyLine);
                     }
-                    if (dependencyLine.contains("--- maven-dependency-plugin")) {
+                    if (dependencyLine.contains("maven-dependency-plugin")) {
                         isProcessingDependency = true;
                     }
                 }
@@ -86,7 +103,7 @@ public class DependencyProcessor {
 
     private void addDependencyLine(String repoName, String dependencyLine) {
         // TODO: parse
-        String tmp = dependencyLine.substring(6)
+        String tmp = dependencyLine.substring(16)
                 .replace(" ", "")
                 .replace("+", "")
                 .replace("-", "")
