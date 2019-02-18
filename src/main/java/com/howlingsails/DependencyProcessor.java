@@ -6,6 +6,7 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.TreeSet;
+import java.util.concurrent.TimeUnit;
 
 public class DependencyProcessor {
 
@@ -52,29 +53,33 @@ public class DependencyProcessor {
 
     private void processRepoDependency(String repo) {
         try {
-            String cmd = "D:\\dev\\gcp\\apache-maven-3.5.4-bin\\apache-maven-3.5.4\\bin\\mvn.cmd dependency:tree";
+            String cmd = "/usr/bin/mvn dependency:tree";
             String[] repoParts = repo.split("/");
             String repoName = repoParts[repoParts.length - 1];
-            Process process = Runtime.getRuntime().exec(cmd, null, new File("C:\\tmp\\" + repoName));
+            Process process = Runtime.getRuntime().exec(cmd, null, new File("/tmp/" + repoName));
             BufferedReader reader = new BufferedReader(new InputStreamReader(
                     process.getInputStream()));
             String dependencyLine;
             boolean isProcessingDependency = false;
-            while ((dependencyLine = reader.readLine()) != null) {
-                // System.out.println("Script output: " + dependencyLine);
-                if (dependencyLine.contains("---------------------------------------------")) {
-                    isProcessingDependency = false;
+            while(process.isAlive()) {
+                while ((dependencyLine = reader.readLine()) != null) {
+                    System.out.println("Script output: " + dependencyLine);
+                    if (dependencyLine.contains("---------------------------------------------")) {
+                        isProcessingDependency = false;
+                    }
+                    if (isProcessingDependency) {
+                        addDependencyLine(repoName, dependencyLine);
+                    }
+                    if (dependencyLine.contains("--- maven-dependency-plugin")) {
+                        isProcessingDependency = true;
+                    }
                 }
-                if (isProcessingDependency) {
-                    addDependencyLine(repoName, dependencyLine);
-                }
-                if (dependencyLine.contains("--- maven-dependency-plugin")) {
-                    isProcessingDependency = true;
-                }
+                process.waitFor(100, TimeUnit.MILLISECONDS);
             }
-
             System.out.println("Exit:" + process.exitValue());
         } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
             e.printStackTrace();
         }
     }
@@ -121,23 +126,24 @@ public class DependencyProcessor {
 
     private void processRepo(String repo) {
         System.out.println(repo);
-        return;
-/*        try {
-            String cmd = "git clone "+repo;
 
-            Process process = Runtime.getRuntime().exec(cmd,null,new File("C:\\tmp\\"));
+        try {
+            String cmd = "git clone " + repo;
+
+            Process process = Runtime.getRuntime().exec(cmd, null, new File("/tmp/"));
             BufferedReader reader = new BufferedReader(new InputStreamReader(
                     process.getErrorStream()));
             String s;
-            while ((s = reader.readLine()) != null) {
-                System.out.println("Script output: " + s);
+            while(process.isAlive()) {
+                while ((s = reader.readLine()) != null) {
+                    System.out.println("Script output: " + s);
+                }
+                process.waitFor(100,TimeUnit.MICROSECONDS);
             }
-
             System.out.println("Exit:" + process.exitValue());
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
-        }*/
-
+        }
     }
 
     private void loadRepoList(ArrayList<String> repoList) {
