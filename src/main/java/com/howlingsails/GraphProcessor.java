@@ -9,6 +9,9 @@ import java.util.HashSet;
 
 import static org.neo4j.driver.v1.Values.parameters;
 
+/**
+ * Following: https://neo4j.com/docs/driver-manual/1.7/client-applications/
+ */
 public class GraphProcessor implements AutoCloseable {
 
     private final Driver driver;
