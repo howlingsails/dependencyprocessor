@@ -40,13 +40,33 @@ public class DependencyProcessor {
             processRepo(repo);
             processRepoDependency(repo);
         }
-        printTree();
+        //hprintTree();
         storetoNeo4j();
     }
 
 
 
     private void storetoNeo4j() {
+        GraphProcessor gp = new GraphProcessor("bolt://localhost:7687","neo4j","vagrant"); //??? 7474, 7687
+        gp.cleanPreviousRun();
+        gp.setConstraints();
+        System.out.println("**********************************************************************");
+        TreeSet<String> orderedList = new TreeSet<>(dependencyTree.keySet());
+        for (String dtiKey:orderedList) {
+            HashMap<String, TreeSet<String>> artifactList = dependencyTree.get(dtiKey);
+            TreeSet<String> secondOrderedList = new TreeSet<>(artifactList.keySet());
+            for (String artifact: secondOrderedList) {
+                TreeSet<String> users = artifactList.get(artifact);
+                for(String repo:users) {
+                    System.out.println(dtiKey+"++"+artifact+"++"+repo);
+                    gp.addModule(dtiKey+":"+artifact);
+                    gp.addProject(repo);
+                    gp.addModuleToProjectLink(dtiKey+":"+artifact,repo);
+                }
+            }
+
+        }
+
 
 
     }
