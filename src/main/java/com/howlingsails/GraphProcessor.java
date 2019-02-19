@@ -43,11 +43,15 @@ public class GraphProcessor implements AutoCloseable {
     }
 
     public void cleanPreviousRun() {
+
         try (Session session = driver.session(AccessMode.WRITE)) {
-            session.run("MATCH (a:Module) DELETE a");
+            session.run("MATCH (a:ModuleVersion) DETACH DELETE a");
         }
         try (Session session = driver.session(AccessMode.WRITE)) {
-            session.run("MATCH (a:Project) DELETE a");
+            session.run("MATCH (a:Module) DETACH DELETE a");
+        }
+        try (Session session = driver.session(AccessMode.WRITE)) {
+            session.run("MATCH (a:Project) DETACH DELETE a");
         }
 
     }
@@ -59,6 +63,9 @@ public class GraphProcessor implements AutoCloseable {
         try (Session session = driver.session(AccessMode.WRITE)) {
             session.run("CREATE CONSTRAINT ON (a:Project ) ASSERT a.name IS UNIQUE");
         }
+        try (Session session = driver.session(AccessMode.WRITE)) {
+            session.run("CREATE CONSTRAINT ON (a:ModuleVersion ) ASSERT a.name IS UNIQUE");
+        }
 
     }
 
@@ -68,7 +75,13 @@ public class GraphProcessor implements AutoCloseable {
         try (Session session = driver.session(AccessMode.WRITE)) {
             session.run("CREATE (a:Module {name: $name})", parameters("name", name));
         } catch(ClientException ce) {
-            //DO NOTHING
+        }
+    }
+    public void addModuleVersion( String name )
+    {
+        try (Session session = driver.session(AccessMode.WRITE)) {
+            session.run("CREATE (a:ModuleVersion {name: $name})", parameters("name", name));
+        } catch(ClientException ce) {
         }
     }
 
@@ -77,10 +90,11 @@ public class GraphProcessor implements AutoCloseable {
         try (Session session = driver.session(AccessMode.WRITE)) {
             session.run("CREATE (a:Project {name: $name})", parameters("name", name));
         } catch(ClientException ce) {
-            //DO NOTHING
         }
 
     }
+
+
 
     public void addModuleToProjectLink(String moduleName, String projectName) {
         /**
@@ -90,15 +104,16 @@ public class GraphProcessor implements AutoCloseable {
             StringBuffer sb = new StringBuffer();
            sb.append("MATCH (m:Module),(p:Project)\n");
            sb.append("WHERE m.name = $moduleName AND p.name = $projectName\n");
-           sb.append("CREATE UNIQUE (m)-[r:USED_BY]->(p)\n");
+           sb.append("CREATE UNIQUE (m)-[r:UTILIZE]->(p)\n");
            session.run(sb.toString(), parameters("moduleName", moduleName,"projectName",projectName));
         }
         /**
          *
          * Query to get it back out in Neo4j
          *
-         * MATCH (m)-[r:USED_BY]->(p) RETURN m,r,p LIMIT 10000
+         * MATCH (m)-[r:UTILIZE]->(p) RETURN m,r,p LIMIT 10000
          *
+         * MATCH (p)<-[r:UTILIZE]-(m) return m,r,p LIMIT 50000
          *
          */
     }
@@ -118,4 +133,25 @@ public class GraphProcessor implements AutoCloseable {
         driver.close();
     }
 
+    public void addModuleVersionToProjectLink(String moduleVersion, String projectName) {
+        /**
+         * Create a uses relationship between module and project by version
+         */
+        try (Session session = driver.session(AccessMode.WRITE)) {
+            StringBuffer sb = new StringBuffer();
+            sb.append("MATCH (mv:ModuleVersion),(p:Project)\n");
+            sb.append("WHERE mv.name = $moduleName AND p.name = $projectName\n");
+            sb.append("CREATE UNIQUE (mv)-[r:USED_BY]->(p)\n");
+            session.run(sb.toString(), parameters("moduleName", moduleVersion,"projectName",projectName));
+        }
+        /**
+         *
+         * Query to get it back out in Neo4j
+         *
+         * MATCH (m)-[r:USED_BY]->(p) RETURN m,r,p LIMIT 10000
+         *
+         *
+         */
+
+    }
 }

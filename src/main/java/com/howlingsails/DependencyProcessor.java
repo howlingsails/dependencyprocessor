@@ -59,9 +59,12 @@ public class DependencyProcessor {
                 TreeSet<String> users = artifactList.get(artifact);
                 for(String repo:users) {
                     System.out.println(dtiKey+"++"+artifact+"++"+repo);
-                    gp.addModule(dtiKey+":"+artifact);
+                    gp.addModule(dtiKey);
                     gp.addProject(repo);
-                    gp.addModuleToProjectLink(dtiKey+":"+artifact,repo);
+                    gp.addModuleVersion(dtiKey+":"+artifact);
+                    gp.addModuleToProjectLink(dtiKey,repo);
+                    gp.addModuleVersionToProjectLink(dtiKey+":"+artifact,repo);
+
                 }
             }
 
