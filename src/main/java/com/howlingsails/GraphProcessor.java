@@ -113,7 +113,12 @@ public class GraphProcessor implements AutoCloseable {
          *
          * MATCH (m)-[r:UTILIZE]->(p) RETURN m,r,p LIMIT 10000
          *
+         *
+         * https://stackoverflow.com/questions/30783783/show-nodes-with-more-than-one-relationship-using-neo4j
+         * MATCH (m)-[r:UTILIZE]->(p) WITH m, count(r) AS count WHERE count > 1 MATCH (m)-[r:UTILIZE]->(p) RETURN m,r,p
+         *
          * MATCH (p)<-[r:UTILIZE]-(m) return m,r,p LIMIT 50000
+         * MATCH (m:m)<-[r:UTILIZE]-(m:Module) with m,count(*) as rel_cnt where rel_cnt > 2 RETURN m,r,rel_count,p LIMIT 1000
          *
          */
     }
